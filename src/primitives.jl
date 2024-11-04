@@ -1417,7 +1417,7 @@ end
 """
     meshopenbook(angle, nbofpages, h)
 
-Create a mesh of 3D open-book polyhedra characterized by the opening angle `angle`, and the number of pages `nbofpages` ≥ 2. The polyhedron lies between the planes  z = 0 and z = −1.
+Create a mesh of 3D open-book polyhedra characterized by the opening angle `angle`, and the number of pages `nbofpages` >= 2. The polyhedron lies between the planes  z = 0 and z = −1.
 The definition of this geometry is in: Chandler-Wilde, S. N. and Spence, E. A. Numerische Mathematik , Vol. 150, No. 2, p. 299-371, 2022. 
 
 The target edge size is `h`.
