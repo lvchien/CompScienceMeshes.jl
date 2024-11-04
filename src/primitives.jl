@@ -1514,9 +1514,9 @@ function meshuniformtetrahedron(edgelength, h)
     
     fno = tempname() * ".msh"
     gmsh.initialize()
-    gmsh.model.add("tetrhedron")
+    gmsh.model.add("tetrahedron")
 
-    c = edgelength/2√2
+    c = edgelength/(2sqrt(2))
     gmsh.model.geo.addPoint(c, c, c, h, 1)
     gmsh.model.geo.addPoint(-c, -c, c, h, 2)
     gmsh.model.geo.addPoint(-c, c, -c, h, 3)
