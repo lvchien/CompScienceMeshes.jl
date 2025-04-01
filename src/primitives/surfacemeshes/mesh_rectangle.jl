@@ -82,8 +82,8 @@ function mesh_rectangle(a::F, b::F, h::F, udim) where F
     nodes = zeros(SVector{udim, F}, (m + 1)*(n + 1))
     faces = Vector{SVector{3, Int64}}(undef, 2*m*n)
     
-    for ix in range(0, n - 1)
-        for iy in range(1, m)
+    for ix in 0 : n - 1
+        for iy in 1 : m
             if udim == 3
                 node = SVector((ix)*h, (iy - 1)*h, F(0))
             else
@@ -114,7 +114,7 @@ function mesh_rectangle(a::F, b::F, h::F, udim) where F
         
     end
     # for ix = n
-    for iy in range(0, m)
+    for iy in 0 : m
         if udim == 3
             nodes[n*(m + 1) + iy + 1] = SVector(n*h, (iy*h), F(0))
         else 
@@ -213,3 +213,99 @@ end
     @test cartesian(p) ≈ point(0.5, 0.5, 0.0)
 end
 
+function meshrectangle_unit_tri_2graded(h::T, udim) where {T}
+    ds = h^2 / 2
+    s = range(0, 1/2-ds/2, step=ds)
+    xleft = 0.5 * (1 .- sqrt.(1 .- 4*s.^2))
+    xright = 0.5 * (1 .+ sqrt.(1 .- 4*s.^2))
+    x = [xleft; [1/2]; reverse(xright)]
+    y = x
+
+    @show xleft
+    @show xright
+
+    I = SVector{3,Int}
+
+    vertices = [point(T,xi,yj,0) for xi in x for yj in y]
+    faces = Vector{I}()
+    for i in 1:length(x)-1
+        for j in 1:length(y)-1
+            push!(faces, I(i + (j-1)*length(x), i + 1 + (j-1)*length(x), i + 1 + j*length(x)))
+            push!(faces, I(i + (j-1)*length(x), i + 1 + j*length(x), i + j*length(x)))
+        end
+    end
+
+    return Mesh(vertices, faces)
+end
+
+@testitem "unit rectangle" begin
+    m = CompScienceMeshes.meshrectangle_unit_tri_2graded(0.2, 3)
+end
+
+function meshrectangle_unit_tri_2graded2(N::T, udim) where {T}
+    s = range(0, N-1, step=1)
+    xleft = 0.5*(-1.0 .+ (s/N).^2)
+    xright = 0.5*(1.0 .- (s/N).^2)
+    x = [xleft; [0.0]; reverse(xright)] .+ 0.5
+    y = x
+    U = eltype(x)
+
+    #return xleft .+ 0.5
+
+    @show x
+
+    I = SVector{3,Int}
+
+    vertices = [point(U,xi,yj,0) for xi in x for yj in y]
+    faces = Vector{I}()
+    for i in 1:length(x)-1
+        for j in 1:length(y)-1
+            push!(faces, I(i + (j-1)*length(x), i + 1 + (j-1)*length(x), i + 1 + j*length(x)))
+            push!(faces, I(i + (j-1)*length(x), i + 1 + j*length(x), i + j*length(x)))
+        end
+    end
+
+    return Mesh(vertices, faces)
+end
+
+function meshrectangle_tri_2graded(l::T, b::T, N, udim) where {T}
+    s = range(0, N-1, step=1)
+    xleft = 0.5*(-1.0 .+ (s/N).^2)
+    xright = 0.5*(1.0 .- (s/N).^2)
+    x = [xleft*l; [0.0]; reverse(xright)*l] .+ 0.5*l
+    y = [xleft*b; [0.0]; reverse(xright)*b] .+ 0.5*b
+    U = eltype(x)
+
+    #return xleft .+ 0.5
+
+    @show x
+
+    I = SVector{3,Int}
+
+    vertices = [point(U,xi,yj,0) for xi in x for yj in y]
+    faces = Vector{I}()
+    for i in 1:length(x)-1
+        for j in 1:length(y)-1
+            push!(faces, I(i + (j-1)*length(x), i + 1 + (j-1)*length(x), i + 1 + j*length(x)))
+            push!(faces, I(i + (j-1)*length(x), i + 1 + j*length(x), i + j*length(x)))
+        end
+    end
+
+    return Mesh(vertices, faces)
+end
+
+function meshcuboid_tri_2graded(l::T, b::T, w::T, N::U) where {T,U}
+    m = CompScienceMeshes.meshrectangle_tri_2graded(l, b, N, 3)
+    m′ = CompScienceMeshes.fliporientation(CompScienceMeshes.translate(m,[0,0,w]))
+    mb = CompScienceMeshes.meshrectangle_tri_2graded(l, w, N, 3)
+    m1 = CompScienceMeshes.fliporientation(CompScienceMeshes.rotate(mb,[pi/2,0,0]))
+    m1′ = CompScienceMeshes.fliporientation(CompScienceMeshes.translate(m1,[0,b,0]))
+    mb = CompScienceMeshes.meshrectangle_tri_2graded(w, b, N, 3)
+    m2 = CompScienceMeshes.fliporientation(CompScienceMeshes.rotate(mb,[0,-pi/2,0]))
+    m2′ = CompScienceMeshes.fliporientation(CompScienceMeshes.translate(m2,[l,0,0]))
+
+    Γ = CompScienceMeshes.weld(m, m′, m1, m1′, m2, m2′)
+
+    @assert CompScienceMeshes.isoriented(Γ)
+    return Γ
+end

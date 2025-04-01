@@ -75,6 +75,30 @@ function meshcuboid(len::F, breadth::F, width::F, edge_len::F;
     return msh
 end
 
+@testitem "orientation" begin
+    using LinearAlgebra
+
+    m1 = meshcuboid(1.0, 1.0, 1.0, 0.25; generator=:compsciencemeshes)
+    m2 = meshcuboid(1.0, 1.0, 1.0, 0.25; generator=:gmsh)
+
+    p1 = center(chart(m1, first(m1)))
+    p2 = center(chart(m2, first(m2)))
+
+    n1 = normal(p1)
+    n2 = normal(p2)
+
+    x0 = point(0.5, 0.5, 0.5)
+    x1 = cartesian(p1)
+    x2 = cartesian(p2)
+
+    @show x1, n1
+    @show x2, n2
+
+    @test dot(x1-x0, n1) > 0
+    @test dot(x2-x0, n2) > 0
+end
+
+
 #code for meshing a cuboid regularly
 """
     mesh_cuboid(a::F, b::F, c::F, h::F)
@@ -95,8 +119,8 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
         #the first face/node is the variable + 1
         back_node = (m + 1)*(n + 1) + 2*(p - 1)*(m + n)
         back_face = 2*m*p + 2*n*p + 2*m*n
-        for ix in range(1, n)
-            for iy in range(1, m)
+        for ix in 1:n
+            for iy in 1:m
                 #nodes
                 #front
                 nodes[(ix - 1)*(m + 1) + iy] = SVector((ix - 1)*h, (iy - 1)*h, F(0))
@@ -138,7 +162,7 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
                 (ix - 1)*h, m*h, p*h)
         end
         # for ix = n
-        for iy in range(0, m)
+        for iy in 0:m
             #front
             nodes[n*(m + 1) + iy + 1] = SVector(n*h, (iy*h),  F(0))
             #back
@@ -147,8 +171,8 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
         end 
 
         # along y - z
-        for iy in range(1, m + 1)
-            for iz in range(2, p)
+        for iy in 1 : m + 1
+            for iz in 2 : p
                 #left node + m + 2*n - 1 gives the right nodes
                 left_node_front = (n + 1)*(m + 1) + (iz - 2)*(2*(m + n))
                 left_node_back = (n + 1)*(m + 1) + (iz - 3)*(2*(m + n))
@@ -336,7 +360,7 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
                 )
             # }
             #}
-        for ix in range(1, n)
+        for ix in 1 : n
             if (ix != 1) 
                 #nodes for iz = p
                 #iy = 1 -> bottom nodes
@@ -394,7 +418,7 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
                         )
                 end
             end
-            for iz in range(2, p - 1)
+            for iz in 2 : p - 1
                 if ix == 1
                     #bottom faces
                     faces[2*m*n + (ix - 1)*2*p + (2*iz - 1)] = SVector(
@@ -481,7 +505,8 @@ function mesh_cuboid(a::F, b::F, c::F, h::F) where F
                 end
             end
         end
-    return Mesh(nodes, faces)
+    Γ = Mesh(nodes, faces)
+    return flipmesh!(Γ)
 end
 
 """
