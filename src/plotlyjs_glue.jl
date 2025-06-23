@@ -52,6 +52,46 @@ function __init__()
             return patch(mesh; kwargs...)
         end
 
+        # @eval function PlotlyBase.mesh3d(u::AbstractVector, U::BEAST.AbstractSpace; kwargs...)
+
+        #     fcr, geo = BEAST.facecurrents(u, U)
+
+        #     v = CompScienceMeshes.vertexarray(geo)
+        #     c = CompScienceMeshes.cellarray(geo)
+
+        #     x = v[:,1];    y = v[:,2];    z = v[:,3]
+        #     i = c[:,1].-1; j = c[:,2].-1; k = c[:,3].-1
+
+        #     return PlotlyBase.mesh3d(;
+        #         x=x, y=y, z=z,
+        #         i=i, j=j, k=k,
+        #         intensitymode="cell",
+        #         intensity=norm.(fcr),
+        #         kwargs...)
+        # end
+
+
+        # @eval PlotlyBase.mesh3d(u::BEAST.FEMFunction; kwargs...) = PlotlyBase.mesh3d(u.coeffs, u.space; kwargs...)
+
+
+        @eval function PlotlyBase.mesh3d(geo::CompScienceMeshes.AbstractMesh; kwargs...)
+
+            # fcr, geo = BEAST.facecurrents(u, U)
+
+            v = CompScienceMeshes.vertexarray(geo)
+            c = CompScienceMeshes.cellarray(geo)
+
+            x = v[:,1];    y = v[:,2];    z = v[:,3]
+            i = c[:,1].-1; j = c[:,2].-1; k = c[:,3].-1
+
+            return PlotlyBase.mesh3d(;
+                x=x, y=y, z=z,
+                i=i, j=j, k=k,
+                # intensitymode="cell",
+                # intensity=norm.(fcr),
+                kwargs...)
+        end
+
         @eval function cones(mesh, arrows; sizeref=2, kwargs...)
             # normals = [normal(chart(mesh,cell)) for cell in mesh]
             centers = [cartesian(center(chart(mesh,cell))) for cell in mesh]
@@ -89,5 +129,26 @@ function __init__()
                 )
             )
         end
+
+        @eval function PlotlyBase.scatter3d(edges::CompScienceMeshes.AbstractMesh{3,2}; kwargs...)
+            T = CompScienceMeshes.coordtype(edges)
+            x = T[]
+            y = T[]
+            z = T[]
+            for edge in edges
+                chrt = CompScienceMeshes.chart(edges, edge)
+                v1, v2 = chrt.vertices
+                append!(x, [v1[1],v2[1],NaN])
+                append!(y, [v1[2],v2[2],NaN])
+                append!(z, [v1[3],v2[3],NaN])
+            end
+            return PlotlyBase.scatter3d(x=x, y=y, z=z, mode="lines"; kwargs...)
+        end
+
+        @eval function PlotlyBase.scatter3d(surf::CompScienceMeshes.AbstractMesh{3,3}; kwargs...)
+            PlotlyBase.scatter3d(CompScienceMeshes.skeleton(surf, 1); kwargs...)
+        end
+
+
     end
 end
