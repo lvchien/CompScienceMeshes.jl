@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.10
+
+- New method for union that returns the input meshes as submeshes of the union mesh.
+- `parent` back-edge for submeshes.
+- embedding implemented for surface meshes.
+- Minimum supported Julia version is 1.10
+
 ## Version 0.9.1
 
 - `meshcuboid` returns outward oriented meshes for both the `gmsh` and `compsiencemeshes` generators.
